@@ -16,7 +16,7 @@
 			)
 		);]]></search>
             <add><![CDATA[		$request = $smcFunc['db_query']('', '
-			SELECT m.id_member, m.poster_name, m.poster_email, m.poster_time, m.approved, m.id_topic, t.id_first_msg
+			SELECT m.id_member, m.poster_name, m.poster_email, m.poster_time, m.approved, m.id_topic, m.subject, t.id_first_msg
 			FROM {db_prefix}messages AS m
 			INNER JOIN {db_prefix}topics AS t ON m.id_topic = t.id_topic
 			WHERE m.id_msg = {int:id_msg}
@@ -56,14 +56,15 @@
 		$smcFunc['db_free_result']($request);
 		
 		// Now do the actual updating!
-		$smcFunc['db_query']('', '
-			UPDATE {db_prefix}messages
-			SET subject = {string:subject}
-			WHERE id_msg IN ({array_int:msgs})',
-			array(
-				'subject' => 'Re: ' . $_POST['subject'],
-				'msgs' => $messages_to_change
-			));
+		if (!empty($messages_to_change))
+			$smcFunc['db_query']('', '
+				UPDATE {db_prefix}messages
+				SET subject = {string:subject}
+				WHERE id_msg IN ({array_int:msgs})',
+				array(
+					'subject' => 'Re: ' . $_POST['subject'],
+					'msgs' => $messages_to_change
+				));
 	}
 
 ]]></add>
