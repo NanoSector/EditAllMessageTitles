@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE modification SYSTEM "http://www.simplemachines.org/xml/modification">
+<!--Generated with Mod Manager (c) 2013 Yoshi2889-->
+<modification xmlns:smf="http://www.simplemachines.org/" xmlns="http://www.simplemachines.org/xml/modification">
+    <id>Yoshi2889:EditAllMessageTitles</id>
+    <version>0.1</version>
+    <file name="$sourcedir/Post.php">
+        <operation>
+            <search position="replace"><![CDATA[		$request = $smcFunc['db_query']('', '
+			SELECT id_member, poster_name, poster_email, poster_time, approved
+			FROM {db_prefix}messages
+			WHERE id_msg = {int:id_msg}
+			LIMIT 1',
+			array(
+				'id_msg' => $_REQUEST['msg'],
+			)
+		);]]></search>
+            <add><![CDATA[		$request = $smcFunc['db_query']('', '
+			SELECT m.id_member, m.poster_name, m.poster_email, m.poster_time, m.approved, m.id_topic, t.id_first_msg
+			FROM {db_prefix}messages AS m
+			INNER JOIN {db_prefix}topics AS t ON m.id_topic = t.id_topic
+			WHERE m.id_msg = {int:id_msg}
+			LIMIT 1',
+			array(
+				'id_msg' => $_REQUEST['msg'],
+			)
+		);]]></add>
+        </operation>
+        <operation>
+            <search position="after"><![CDATA[		// Can they approve it?]]></search>
+            <add><![CDATA[		// Do we need to change the subjects in this topic?
+		$change_all_subjects = $_POST['subject'] != $row['subject'] && $_REQUEST['msg'] == $row['id_first_msg'] ? $row['id_topic'] : false;
+		
+		]]></add>
+        </operation>
+        <operation>
+            <search position="after"><![CDATA[	// Make the poll...]]></search>
+            <add><![CDATA[	// Should we change all subjects?
+	if (!empty($change_all_subjects))
+	{
+		$request = $smcFunc['db_query']('', '
+			SELECT id_msg
+			FROM {db_prefix}messages
+			WHERE id_topic = {int:id_topic}',
+			array(
+				'id_topic' => $change_all_subjects
+			));
+			
+		$messages_to_change = array();
+		while ($row = $smcFunc['db_fetch_row']($request))
+		{
+			if ($_REQUEST['msg'] != $row[0])
+				$messages_to_change[] = $row[0];
+		}
+
+		$smcFunc['db_free_result']($request);
+		
+		// Now do the actual updating!
+		$smcFunc['db_query']('', '
+			UPDATE {db_prefix}messages
+			SET subject = {string:subject}
+			WHERE id_msg IN ({array_int:msgs})',
+			array(
+				'subject' => 'Re: ' . $_POST['subject'],
+				'msgs' => $messages_to_change
+			));
+	}
+
+]]></add>
+        </operation>
+    </file>
+</modification>

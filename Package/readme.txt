@@ -1,0 +1,1 @@
+[center][color=red][size=24pt]Edit All Message Titles[/size][/color][/center]
